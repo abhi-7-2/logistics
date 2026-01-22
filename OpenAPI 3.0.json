@@ -1,0 +1,1545 @@
+openapi: 3.0.3
+info:
+  title: Multi-tenant Commerce Ingestion API
+  version: 1.0.0
+  description: >
+    CRUD + search APIs for Organizations, Websites, Orders, Fulfillments, and Tracking.
+    Supports date-time range filtering and pagination (page/size).
+
+servers:
+  - url: https://api.example.com
+
+tags:
+  - name: Organizations
+  - name: Websites
+  - name: Orders
+  - name: Fulfillments
+  - name: Tracking
+
+paths:
+  /organizations:
+    post:
+      tags: [Organizations]
+      summary: Create organization
+      operationId: createOrganization
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OrganizationCreateRequest"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Organization"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+    get:
+      tags: [Organizations]
+      summary: List/search organizations (date range + pagination)
+      operationId: listOrganizations
+      parameters:
+        - $ref: "#/components/parameters/from"
+        - $ref: "#/components/parameters/to"
+        - $ref: "#/components/parameters/page"
+        - $ref: "#/components/parameters/size"
+        - $ref: "#/components/parameters/sort"
+        - name: status
+          in: query
+          schema:
+            $ref: "#/components/schemas/OrgStatus"
+        - name: name
+          in: query
+          description: Name contains (case-insensitive, implementation-specific)
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Paged organizations
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PagedOrganization"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /organizations/search:
+    get:
+      tags: [Organizations]
+      summary: Search organizations by external/reference id
+      operationId: searchOrganizationsByRef
+      parameters:
+        - name: externalId
+          in: query
+          required: true
+          schema:
+            type: string
+        - $ref: "#/components/parameters/page"
+        - $ref: "#/components/parameters/size"
+      responses:
+        "200":
+          description: Paged organizations
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PagedOrganization"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /organizations/{id}:
+    get:
+      tags: [Organizations]
+      summary: Get organization by id
+      operationId: getOrganizationById
+      parameters:
+        - $ref: "#/components/parameters/orgIdPath"
+      responses:
+        "200":
+          description: Organization
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Organization"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    put:
+      tags: [Organizations]
+      summary: Update organization (full replace)
+      operationId: updateOrganization
+      parameters:
+        - $ref: "#/components/parameters/orgIdPath"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OrganizationUpdateRequest"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Organization"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    patch:
+      tags: [Organizations]
+      summary: Update organization (partial)
+      operationId: patchOrganization
+      parameters:
+        - $ref: "#/components/parameters/orgIdPath"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OrganizationPatchRequest"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Organization"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    delete:
+      tags: [Organizations]
+      summary: Delete organization
+      operationId: deleteOrganization
+      parameters:
+        - $ref: "#/components/parameters/orgIdPath"
+      responses:
+        "204":
+          description: No Content
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /organizations/{orgId}/websites:
+    post:
+      tags: [Websites]
+      summary: Create website for organization
+      operationId: createWebsite
+      parameters:
+        - $ref: "#/components/parameters/orgIdPathAlt"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WebsiteCreateRequest"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Website"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    get:
+      tags: [Websites]
+      summary: List/search websites for organization (date range + pagination)
+      operationId: listWebsites
+      parameters:
+        - $ref: "#/components/parameters/orgIdPathAlt"
+        - $ref: "#/components/parameters/from"
+        - $ref: "#/components/parameters/to"
+        - $ref: "#/components/parameters/page"
+        - $ref: "#/components/parameters/size"
+        - $ref: "#/components/parameters/sort"
+        - name: status
+          in: query
+          schema:
+            $ref: "#/components/schemas/WebsiteStatus"
+        - name: platform
+          in: query
+          schema:
+            $ref: "#/components/schemas/Platform"
+        - name: code
+          in: query
+          schema:
+            type: string
+        - name: domain
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Paged websites
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PagedWebsite"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /organizations/{orgId}/websites/search:
+    get:
+      tags: [Websites]
+      summary: Search websites within an organization by websiteId/code/domain
+      operationId: searchWebsites
+      parameters:
+        - $ref: "#/components/parameters/orgIdPathAlt"
+        - name: websiteId
+          in: query
+          description: Website UUID (returns one item if exact match)
+          schema:
+            type: string
+            format: uuid
+        - name: code
+          in: query
+          schema:
+            type: string
+        - name: domain
+          in: query
+          schema:
+            type: string
+        - $ref: "#/components/parameters/page"
+        - $ref: "#/components/parameters/size"
+      responses:
+        "200":
+          description: Paged websites
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PagedWebsite"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /organizations/{orgId}/websites/{websiteId}:
+    get:
+      tags: [Websites]
+      summary: Get website by id
+      operationId: getWebsiteById
+      parameters:
+        - $ref: "#/components/parameters/orgIdPathAlt"
+        - $ref: "#/components/parameters/websiteIdPath"
+      responses:
+        "200":
+          description: Website
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Website"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    put:
+      tags: [Websites]
+      summary: Update website (full replace)
+      operationId: updateWebsite
+      parameters:
+        - $ref: "#/components/parameters/orgIdPathAlt"
+        - $ref: "#/components/parameters/websiteIdPath"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WebsiteUpdateRequest"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Website"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    patch:
+      tags: [Websites]
+      summary: Update website (partial)
+      operationId: patchWebsite
+      parameters:
+        - $ref: "#/components/parameters/orgIdPathAlt"
+        - $ref: "#/components/parameters/websiteIdPath"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WebsitePatchRequest"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Website"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    delete:
+      tags: [Websites]
+      summary: Delete website
+      operationId: deleteWebsite
+      parameters:
+        - $ref: "#/components/parameters/orgIdPathAlt"
+        - $ref: "#/components/parameters/websiteIdPath"
+      responses:
+        "204":
+          description: No Content
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /orders:
+    post:
+      tags: [Orders]
+      summary: Create (or upsert) order
+      operationId: createOrder
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OrderCreateRequest"
+      responses:
+        "201":
+          description: Created/Upserted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Order"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+    get:
+      tags: [Orders]
+      summary: Search orders (date range + pagination)
+      operationId: searchOrders
+      parameters:
+        - name: orgId
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: websiteId
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+        - $ref: "#/components/parameters/from"
+        - $ref: "#/components/parameters/to"
+        - $ref: "#/components/parameters/page"
+        - $ref: "#/components/parameters/size"
+        - $ref: "#/components/parameters/sort"
+        - name: status
+          in: query
+          schema:
+            $ref: "#/components/schemas/OrderStatus"
+        - name: financialStatus
+          in: query
+          schema:
+            $ref: "#/components/schemas/FinancialStatus"
+        - name: fulfillmentStatus
+          in: query
+          schema:
+            $ref: "#/components/schemas/FulfillmentOverallStatus"
+      responses:
+        "200":
+          description: Paged orders
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PagedOrder"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /orders/search:
+    get:
+      tags: [Orders]
+      summary: Search order by external order id/number
+      operationId: searchOrderByExternal
+      parameters:
+        - name: orgId
+          in: query
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: websiteId
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+        - name: externalOrderId
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: externalOrderNumber
+          in: query
+          required: false
+          schema:
+            type: string
+        - $ref: "#/components/parameters/page"
+        - $ref: "#/components/parameters/size"
+      responses:
+        "200":
+          description: Paged orders
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PagedOrder"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /orders/{orderId}:
+    get:
+      tags: [Orders]
+      summary: Get order by id
+      operationId: getOrderById
+      parameters:
+        - $ref: "#/components/parameters/orderIdPath"
+      responses:
+        "200":
+          description: Order
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Order"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    put:
+      tags: [Orders]
+      summary: Update order (full replace)
+      operationId: updateOrder
+      parameters:
+        - $ref: "#/components/parameters/orderIdPath"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OrderUpdateRequest"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Order"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    patch:
+      tags: [Orders]
+      summary: Update order (partial)
+      operationId: patchOrder
+      parameters:
+        - $ref: "#/components/parameters/orderIdPath"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OrderPatchRequest"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Order"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    delete:
+      tags: [Orders]
+      summary: Delete order
+      operationId: deleteOrder
+      parameters:
+        - $ref: "#/components/parameters/orderIdPath"
+      responses:
+        "204":
+          description: No Content
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /orders/{orderId}/fulfillments:
+    post:
+      tags: [Fulfillments]
+      summary: Create fulfillment for an order
+      operationId: createFulfillment
+      parameters:
+        - $ref: "#/components/parameters/orderIdPath"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FulfillmentCreateRequest"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Fulfillment"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    get:
+      tags: [Fulfillments]
+      summary: List/search fulfillments for an order (date range + pagination)
+      operationId: listFulfillments
+      parameters:
+        - $ref: "#/components/parameters/orderIdPath"
+        - $ref: "#/components/parameters/from"
+        - $ref: "#/components/parameters/to"
+        - $ref: "#/components/parameters/page"
+        - $ref: "#/components/parameters/size"
+        - $ref: "#/components/parameters/sort"
+        - name: status
+          in: query
+          schema:
+            $ref: "#/components/schemas/FulfillmentStatus"
+        - name: carrier
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Paged fulfillments
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PagedFulfillment"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /orders/{orderId}/fulfillments/search:
+    get:
+      tags: [Fulfillments]
+      summary: Search fulfillment by external fulfillment id
+      operationId: searchFulfillmentsByExternal
+      parameters:
+        - $ref: "#/components/parameters/orderIdPath"
+        - name: externalFulfillmentId
+          in: query
+          required: true
+          schema:
+            type: string
+        - $ref: "#/components/parameters/page"
+        - $ref: "#/components/parameters/size"
+      responses:
+        "200":
+          description: Paged fulfillments
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PagedFulfillment"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /orders/{orderId}/fulfillments/{fulfillmentId}:
+    get:
+      tags: [Fulfillments]
+      summary: Get fulfillment by id
+      operationId: getFulfillmentById
+      parameters:
+        - $ref: "#/components/parameters/orderIdPath"
+        - $ref: "#/components/parameters/fulfillmentIdPath"
+      responses:
+        "200":
+          description: Fulfillment
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Fulfillment"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    put:
+      tags: [Fulfillments]
+      summary: Update fulfillment (full replace)
+      operationId: updateFulfillment
+      parameters:
+        - $ref: "#/components/parameters/orderIdPath"
+        - $ref: "#/components/parameters/fulfillmentIdPath"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FulfillmentUpdateRequest"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Fulfillment"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    patch:
+      tags: [Fulfillments]
+      summary: Update fulfillment (partial)
+      operationId: patchFulfillment
+      parameters:
+        - $ref: "#/components/parameters/orderIdPath"
+        - $ref: "#/components/parameters/fulfillmentIdPath"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FulfillmentPatchRequest"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Fulfillment"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    delete:
+      tags: [Fulfillments]
+      summary: Delete fulfillment
+      operationId: deleteFulfillment
+      parameters:
+        - $ref: "#/components/parameters/orderIdPath"
+        - $ref: "#/components/parameters/fulfillmentIdPath"
+      responses:
+        "204":
+          description: No Content
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /fulfillments/{fulfillmentId}/tracking:
+    post:
+      tags: [Tracking]
+      summary: Create tracking for a fulfillment
+      operationId: createTracking
+      parameters:
+        - $ref: "#/components/parameters/fulfillmentIdPathStandalone"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TrackingCreateRequest"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Tracking"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    get:
+      tags: [Tracking]
+      summary: List/search tracking for a fulfillment (date range + pagination)
+      operationId: listTracking
+      parameters:
+        - $ref: "#/components/parameters/fulfillmentIdPathStandalone"
+        - $ref: "#/components/parameters/from"
+        - $ref: "#/components/parameters/to"
+        - $ref: "#/components/parameters/page"
+        - $ref: "#/components/parameters/size"
+        - $ref: "#/components/parameters/sort"
+        - name: status
+          in: query
+          schema:
+            $ref: "#/components/schemas/TrackingStatus"
+        - name: carrier
+          in: query
+          schema:
+            type: string
+        - name: trackingNumber
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Paged tracking
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PagedTracking"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /fulfillments/{fulfillmentId}/tracking/search:
+    get:
+      tags: [Tracking]
+      summary: Search tracking by trackingNumber (within fulfillment)
+      operationId: searchTrackingByNumber
+      parameters:
+        - $ref: "#/components/parameters/fulfillmentIdPathStandalone"
+        - name: trackingNumber
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: carrier
+          in: query
+          required: false
+          schema:
+            type: string
+        - $ref: "#/components/parameters/page"
+        - $ref: "#/components/parameters/size"
+      responses:
+        "200":
+          description: Paged tracking
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PagedTracking"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /fulfillments/{fulfillmentId}/tracking/{trackingId}:
+    get:
+      tags: [Tracking]
+      summary: Get tracking by id
+      operationId: getTrackingById
+      parameters:
+        - $ref: "#/components/parameters/fulfillmentIdPathStandalone"
+        - $ref: "#/components/parameters/trackingIdPath"
+      responses:
+        "200":
+          description: Tracking
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Tracking"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    put:
+      tags: [Tracking]
+      summary: Update tracking (full replace)
+      operationId: updateTracking
+      parameters:
+        - $ref: "#/components/parameters/fulfillmentIdPathStandalone"
+        - $ref: "#/components/parameters/trackingIdPath"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TrackingUpdateRequest"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Tracking"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    patch:
+      tags: [Tracking]
+      summary: Update tracking (partial)
+      operationId: patchTracking
+      parameters:
+        - $ref: "#/components/parameters/fulfillmentIdPathStandalone"
+        - $ref: "#/components/parameters/trackingIdPath"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TrackingPatchRequest"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Tracking"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    delete:
+      tags: [Tracking]
+      summary: Delete tracking
+      operationId: deleteTracking
+      parameters:
+        - $ref: "#/components/parameters/fulfillmentIdPathStandalone"
+        - $ref: "#/components/parameters/trackingIdPath"
+      responses:
+        "204":
+          description: No Content
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+components:
+  parameters:
+    from:
+      name: from
+      in: query
+      required: false
+      description: Start datetime (inclusive), ISO-8601
+      schema:
+        type: string
+        format: date-time
+    to:
+      name: to
+      in: query
+      required: false
+      description: End datetime (inclusive), ISO-8601
+      schema:
+        type: string
+        format: date-time
+    page:
+      name: page
+      in: query
+      required: false
+      description: 0-based page index
+      schema:
+        type: integer
+        minimum: 0
+        default: 0
+    size:
+      name: size
+      in: query
+      required: false
+      description: Batch size / page size
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 500
+        default: 50
+    sort:
+      name: sort
+      in: query
+      required: false
+      description: Sorting, e.g. createdAt,desc or updatedAt,asc
+      schema:
+        type: string
+        default: updatedAt,desc
+
+    orgIdPath:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    orgIdPathAlt:
+      name: orgId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+    websiteIdPath:
+      name: websiteId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+    orderIdPath:
+      name: orderId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+    fulfillmentIdPath:
+      name: fulfillmentId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+    fulfillmentIdPathStandalone:
+      name: fulfillmentId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+    trackingIdPath:
+      name: trackingId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+  responses:
+    BadRequest:
+      description: Bad Request
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    NotFound:
+      description: Not Found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        status:
+          type: integer
+        error:
+          type: string
+        message:
+          type: string
+        path:
+          type: string
+      required: [timestamp, status, error, message, path]
+
+    # ----------------------------
+    # Enums
+    # ----------------------------
+    OrgStatus:
+      type: string
+      enum: [ACTIVE, INACTIVE]
+
+    WebsiteStatus:
+      type: string
+      enum: [ACTIVE, INACTIVE]
+
+    Platform:
+      type: string
+      enum: [SHOPIFY, NETSUITE, CUSTOM, MAGENTO, OTHER]
+
+    OrderStatus:
+      type: string
+      enum: [CREATED, CANCELLED, CLOSED]
+
+    FinancialStatus:
+      type: string
+      enum: [UNKNOWN, PENDING, PAID, PARTIALLY_PAID, REFUNDED, PARTIALLY_REFUNDED, VOIDED]
+
+    FulfillmentOverallStatus:
+      type: string
+      enum: [UNFULFILLED, PARTIAL, FULFILLED, CANCELLED, UNKNOWN]
+
+    FulfillmentStatus:
+      type: string
+      enum: [CREATED, SHIPPED, DELIVERED, CANCELLED, FAILED, UNKNOWN]
+
+    TrackingStatus:
+      type: string
+      enum: [LABEL_CREATED, IN_TRANSIT, OUT_FOR_DELIVERY, DELIVERED, EXCEPTION, UNKNOWN]
+
+    # ----------------------------
+    # Organization
+    # ----------------------------
+    Organization:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        externalId:
+          type: string
+          nullable: true
+        name:
+          type: string
+        status:
+          $ref: "#/components/schemas/OrgStatus"
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required: [id, name, status, createdAt, updatedAt]
+
+    OrganizationCreateRequest:
+      type: object
+      properties:
+        externalId:
+          type: string
+          nullable: true
+        name:
+          type: string
+          minLength: 2
+        status:
+          $ref: "#/components/schemas/OrgStatus"
+      required: [name]
+
+    OrganizationUpdateRequest:
+      type: object
+      properties:
+        externalId:
+          type: string
+          nullable: true
+        name:
+          type: string
+          minLength: 2
+        status:
+          $ref: "#/components/schemas/OrgStatus"
+      required: [name, status]
+
+    OrganizationPatchRequest:
+      type: object
+      properties:
+        externalId:
+          type: string
+          nullable: true
+        name:
+          type: string
+          minLength: 2
+        status:
+          $ref: "#/components/schemas/OrgStatus"
+
+    PagedOrganization:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Organization"
+        page:
+          type: integer
+        size:
+          type: integer
+        totalElements:
+          type: integer
+        totalPages:
+          type: integer
+        hasNext:
+          type: boolean
+      required: [data, page, size, totalElements, totalPages, hasNext]
+
+    # ----------------------------
+    # Website
+    # ----------------------------
+    Website:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        orgId:
+          type: string
+          format: uuid
+        code:
+          type: string
+        name:
+          type: string
+        platform:
+          $ref: "#/components/schemas/Platform"
+        domain:
+          type: string
+          nullable: true
+        status:
+          $ref: "#/components/schemas/WebsiteStatus"
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required: [id, orgId, code, name, platform, status, createdAt, updatedAt]
+
+    WebsiteCreateRequest:
+      type: object
+      properties:
+        code:
+          type: string
+          minLength: 2
+        name:
+          type: string
+          minLength: 2
+        platform:
+          $ref: "#/components/schemas/Platform"
+        domain:
+          type: string
+          nullable: true
+        status:
+          $ref: "#/components/schemas/WebsiteStatus"
+      required: [code, name, platform]
+
+    WebsiteUpdateRequest:
+      type: object
+      properties:
+        code:
+          type: string
+          minLength: 2
+        name:
+          type: string
+          minLength: 2
+        platform:
+          $ref: "#/components/schemas/Platform"
+        domain:
+          type: string
+          nullable: true
+        status:
+          $ref: "#/components/schemas/WebsiteStatus"
+      required: [code, name, platform, status]
+
+    WebsitePatchRequest:
+      type: object
+      properties:
+        code:
+          type: string
+          minLength: 2
+        name:
+          type: string
+          minLength: 2
+        platform:
+          $ref: "#/components/schemas/Platform"
+        domain:
+          type: string
+          nullable: true
+        status:
+          $ref: "#/components/schemas/WebsiteStatus"
+
+    PagedWebsite:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Website"
+        page:
+          type: integer
+        size:
+          type: integer
+        totalElements:
+          type: integer
+        totalPages:
+          type: integer
+        hasNext:
+          type: boolean
+      required: [data, page, size, totalElements, totalPages, hasNext]
+
+    # ----------------------------
+    # Order
+    # ----------------------------
+    Order:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        orgId:
+          type: string
+          format: uuid
+        websiteId:
+          type: string
+          format: uuid
+        externalOrderId:
+          type: string
+        externalOrderNumber:
+          type: string
+          nullable: true
+        status:
+          $ref: "#/components/schemas/OrderStatus"
+        financialStatus:
+          $ref: "#/components/schemas/FinancialStatus"
+        fulfillmentStatus:
+          $ref: "#/components/schemas/FulfillmentOverallStatus"
+        customerEmail:
+          type: string
+          format: email
+          nullable: true
+        orderTotal:
+          type: number
+          format: double
+        currency:
+          type: string
+          nullable: true
+          example: USD
+        orderCreatedAt:
+          type: string
+          format: date-time
+          nullable: true
+        orderUpdatedAt:
+          type: string
+          format: date-time
+          nullable: true
+        ingestedAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required: [id, orgId, websiteId, externalOrderId, status, financialStatus, fulfillmentStatus, orderTotal, ingestedAt, createdAt, updatedAt]
+
+    OrderCreateRequest:
+      type: object
+      properties:
+        orgId:
+          type: string
+          format: uuid
+        websiteId:
+          type: string
+          format: uuid
+        externalOrderId:
+          type: string
+        externalOrderNumber:
+          type: string
+          nullable: true
+        status:
+          $ref: "#/components/schemas/OrderStatus"
+        financialStatus:
+          $ref: "#/components/schemas/FinancialStatus"
+        fulfillmentStatus:
+          $ref: "#/components/schemas/FulfillmentOverallStatus"
+        customerEmail:
+          type: string
+          format: email
+          nullable: true
+        orderTotal:
+          type: number
+          format: double
+        currency:
+          type: string
+          nullable: true
+        orderCreatedAt:
+          type: string
+          format: date-time
+          nullable: true
+        orderUpdatedAt:
+          type: string
+          format: date-time
+          nullable: true
+      required: [orgId, websiteId, externalOrderId]
+
+    OrderUpdateRequest:
+      allOf:
+        - $ref: "#/components/schemas/OrderCreateRequest"
+
+    OrderPatchRequest:
+      type: object
+      properties:
+        externalOrderNumber:
+          type: string
+          nullable: true
+        status:
+          $ref: "#/components/schemas/OrderStatus"
+        financialStatus:
+          $ref: "#/components/schemas/FinancialStatus"
+        fulfillmentStatus:
+          $ref: "#/components/schemas/FulfillmentOverallStatus"
+        customerEmail:
+          type: string
+          format: email
+          nullable: true
+        orderTotal:
+          type: number
+          format: double
+        currency:
+          type: string
+          nullable: true
+        orderCreatedAt:
+          type: string
+          format: date-time
+          nullable: true
+        orderUpdatedAt:
+          type: string
+          format: date-time
+          nullable: true
+
+    PagedOrder:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Order"
+        page:
+          type: integer
+        size:
+          type: integer
+        totalElements:
+          type: integer
+        totalPages:
+          type: integer
+        hasNext:
+          type: boolean
+      required: [data, page, size, totalElements, totalPages, hasNext]
+
+    # ----------------------------
+    # Fulfillment
+    # ----------------------------
+    Fulfillment:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        orderId:
+          type: string
+          format: uuid
+        externalFulfillmentId:
+          type: string
+        status:
+          $ref: "#/components/schemas/FulfillmentStatus"
+        carrier:
+          type: string
+          nullable: true
+        serviceLevel:
+          type: string
+          nullable: true
+        shippedAt:
+          type: string
+          format: date-time
+          nullable: true
+        deliveredAt:
+          type: string
+          format: date-time
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required: [id, orderId, externalFulfillmentId, status, createdAt, updatedAt]
+
+    FulfillmentCreateRequest:
+      type: object
+      properties:
+        externalFulfillmentId:
+          type: string
+        status:
+          $ref: "#/components/schemas/FulfillmentStatus"
+        carrier:
+          type: string
+          nullable: true
+        serviceLevel:
+          type: string
+          nullable: true
+        shippedAt:
+          type: string
+          format: date-time
+          nullable: true
+        deliveredAt:
+          type: string
+          format: date-time
+          nullable: true
+      required: [externalFulfillmentId]
+
+    FulfillmentUpdateRequest:
+      allOf:
+        - $ref: "#/components/schemas/FulfillmentCreateRequest"
+
+    FulfillmentPatchRequest:
+      type: object
+      properties:
+        status:
+          $ref: "#/components/schemas/FulfillmentStatus"
+        carrier:
+          type: string
+          nullable: true
+        serviceLevel:
+          type: string
+          nullable: true
+        shippedAt:
+          type: string
+          format: date-time
+          nullable: true
+        deliveredAt:
+          type: string
+          format: date-time
+          nullable: true
+
+    PagedFulfillment:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Fulfillment"
+        page:
+          type: integer
+        size:
+          type: integer
+        totalElements:
+          type: integer
+        totalPages:
+          type: integer
+        hasNext:
+          type: boolean
+      required: [data, page, size, totalElements, totalPages, hasNext]
+
+    # ----------------------------
+    # Tracking
+    # ----------------------------
+    Tracking:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        fulfillmentId:
+          type: string
+          format: uuid
+        trackingNumber:
+          type: string
+        carrier:
+          type: string
+          nullable: true
+        trackingUrl:
+          type: string
+          nullable: true
+        status:
+          $ref: "#/components/schemas/TrackingStatus"
+        isPrimary:
+          type: boolean
+        lastEventAt:
+          type: string
+          format: date-time
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required: [id, fulfillmentId, trackingNumber, status, isPrimary, createdAt, updatedAt]
+
+    TrackingCreateRequest:
+      type: object
+      properties:
+        trackingNumber:
+          type: string
+        carrier:
+          type: string
+          nullable: true
+        trackingUrl:
+          type: string
+          nullable: true
+        status:
+          $ref: "#/components/schemas/TrackingStatus"
+        isPrimary:
+          type: boolean
+          default: false
+        lastEventAt:
+          type: string
+          format: date-time
+          nullable: true
+      required: [trackingNumber]
+
+    TrackingUpdateRequest:
+      allOf:
+        - $ref: "#/components/schemas/TrackingCreateRequest"
+
+    TrackingPatchRequest:
+      type: object
+      properties:
+        carrier:
+          type: string
+          nullable: true
+        trackingUrl:
+          type: string
+          nullable: true
+        status:
+          $ref: "#/components/schemas/TrackingStatus"
+        isPrimary:
+          type: boolean
+        lastEventAt:
+          type: string
+          format: date-time
+          nullable: true
+
+    PagedTracking:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Tracking"
+        page:
+          type: integer
+        size:
+          type: integer
+        totalElements:
+          type: integer
+        totalPages:
+          type: integer
+        hasNext:
+          type: boolean
+      required: [data, page, size, totalElements, totalPages, hasNext]
